@@ -17,6 +17,12 @@ O gráfico usa Chart.js via CDN; sem internet, os resultados e a tabela continua
 - Gráfico de barras (composição investido × juros, ou aporte × juros do mês)
 - Tabela mensal ou anual, com exportação para CSV
 - Cálculo do aporte a partir do salário (salário, aumento salarial anual e % investido), como na aba *Projecao_salarial*
+- **Cenários**: salve simulações com nomes (aportes, taxas e prazos diferentes), reabra no simulador, atualize,
+  renomeie ou exclua. Os cenários ficam guardados no navegador (localStorage) e podem ser exportados/importados
+  em arquivo `.json` para backup ou para usar em outro computador.
+- **Comparação de cenários** (marque quais entram): gráfico de linhas com a evolução de cada cenário
+  (total acumulado, líquido real, investido ou juros), gráfico de barras com o resultado final
+  (investido × juros) e tabela lado a lado com parâmetros e resultados, destacando o melhor valor e exportável em CSV
 - Tema claro/escuro e layout responsivo
 
 ## Lógica de cálculo (igual à planilha)

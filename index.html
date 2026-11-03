@@ -170,6 +170,39 @@ tbody tr.year-end td { font-weight: 700; }
   padding: 12px 16px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px;
   color: var(--text); overflow-x: auto;
 }
+.sc-save { display: flex; gap: 16px; align-items: flex-start; padding: 18px 20px; flex-wrap: wrap; }
+.sc-save .btn { margin-top: 27px; }
+.sc-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 10px; }
+.sc-count { font-size: 14px; color: var(--muted); }
+.sc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.sc-item { padding: 14px 16px; border-left: 5px solid var(--c); display: flex; flex-direction: column; gap: 8px; }
+.sc-item.off { opacity: .6; }
+.sc-top { display: flex; align-items: center; gap: 10px; }
+.sc-top input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--c); flex: none; cursor: pointer; }
+.sc-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.sc-final { font-size: 20px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.sc-meta { font-size: 13px; color: var(--muted); }
+.sc-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.sc-btns .btn { padding: 5px 10px; font-size: 12px; }
+.btn-danger { color: var(--danger); }
+.sc-empty, .sc-note { color: var(--muted); font-size: 14px; }
+.sc-note { font-size: 12px; margin: 10px 0 0; }
+#cmp .chart-card:first-child { margin-top: 20px; }
+.cmp-table { width: auto; min-width: 100%; }
+@media (max-width: 560px) {
+  .sc-save { flex-direction: column; align-items: stretch; }
+  .sc-save .btn { margin-top: 0; }
+  .cmp-table th:first-child, .cmp-table td:first-child { white-space: normal; min-width: 130px; max-width: 150px; }
+  .cmp-table th, .cmp-table td { padding: 8px 10px; font-size: 13px; }
+}
+.cmp-table th, .cmp-table td { text-align: right !important; }
+.cmp-table th:first-child, .cmp-table td:first-child { text-align: left !important; position: sticky; left: 0; background: var(--surface); z-index: 2; }
+.cmp-table thead th:first-child { background: var(--surface-2); z-index: 3; }
+.cmp-table thead th { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--text); }
+.cmp-table thead th .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.cmp-table tr.grp td { background: var(--surface-2) !important; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; }
+.cmp-table td.best { color: var(--primary); font-weight: 800; }
+.cmp-table tbody tr:nth-child(even) td { background: transparent; }
 footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align: center; }
 [hidden] { display: none !important; }
 
@@ -317,6 +350,62 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
           </tr></thead>
           <tbody id="tbody"></tbody>
         </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="scenarios">
+    <h2>Meus cenários</h2>
+    <p class="sub">Salve simulações com aportes, taxas e prazos diferentes e compare-as lado a lado.</p>
+
+    <div class="card sc-save">
+      <div class="field" style="flex:1;min-width:0">
+        <label for="scName">Nome do cenário</label>
+        <div class="input"><input id="scName" maxlength="40" placeholder="Ex.: Aporte de R$ 2.000 por 20 anos"></div>
+        <span class="hint">Salva os valores que estão preenchidos no simulador acima.</span>
+      </div>
+      <button type="button" class="btn btn-primary" id="scSaveBtn">Salvar cenário</button>
+    </div>
+    <div class="error" id="scError" role="alert" style="text-align:left"></div>
+
+    <div class="sc-toolbar">
+      <span class="sc-count" id="scCount"></span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-ghost btn-sm" id="scExport">Exportar cenários</button>
+        <label class="btn btn-ghost btn-sm" style="margin:0">Importar cenários<input type="file" id="scImport" accept="application/json,.json" hidden></label>
+      </div>
+    </div>
+    <div class="sc-list" id="scList"></div>
+    <p class="sc-empty" id="scEmpty">Nenhum cenário salvo ainda. Ajuste o simulador, dê um nome e clique em <strong>Salvar cenário</strong>.</p>
+
+    <div id="cmp" hidden>
+      <div class="card chart-card">
+        <div class="chart-head">
+          <h3>Evolução comparada</h3>
+          <div class="seg" id="cmpMetric">
+            <button type="button" data-v="total" class="on">Total acumulado</button>
+            <button type="button" data-v="real">Líquido real</button>
+            <button type="button" data-v="investido">Investido</button>
+            <button type="button" data-v="juros">Juros</button>
+          </div>
+        </div>
+        <div class="chart-box"><canvas id="cmpLine" aria-label="Evolução dos cenários comparados" role="img"></canvas></div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-head"><h3>Resultado final por cenário</h3></div>
+        <div class="chart-box" id="cmpBarBox"><canvas id="cmpBar" aria-label="Resultado final por cenário" role="img"></canvas></div>
+      </div>
+
+      <div class="card table-card">
+        <div class="chart-head">
+          <h3>Comparação lado a lado</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="cmpCsv">Exportar CSV</button>
+        </div>
+        <div class="table-scroll" style="max-height:none">
+          <table class="cmp-table" id="cmpTable"></table>
+        </div>
+        <p class="sc-note">Em verde, o melhor valor de cada linha de resultado.</p>
       </div>
     </div>
   </section>
@@ -594,6 +683,287 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
   });
   renderSalary();
 
+  // ---------- Cenários ----------
+  const SC_KEY = "jc-cenarios-v1";
+  const PALETTE = ["#2f6fd6", "#e8590c", "#0b9a6f", "#a23cc4", "#d4a106", "#0f9fb5", "#d6336c", "#5c6b7a"];
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const pct = (v, d = 2) => (v * 100).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: d }) + "%";
+  let scenarios = [];
+  let memoryOnly = false;
+  let cmpMetric = "total", cmpLine = null, cmpBar = null;
+
+  function loadScenarios() {
+    try {
+      const raw = localStorage.getItem(SC_KEY);
+      scenarios = raw ? JSON.parse(raw).filter((s) => s && s.params) : [];
+    } catch (_) { scenarios = []; memoryOnly = true; }
+  }
+  function persist() {
+    try { localStorage.setItem(SC_KEY, JSON.stringify(scenarios)); memoryOnly = false; }
+    catch (_) { memoryOnly = true; }
+  }
+  function nextColor() {
+    const used = new Set(scenarios.map((s) => s.color));
+    return PALETTE.find((c) => !used.has(c)) || PALETTE[scenarios.length % PALETTE.length];
+  }
+  function paramsOnly(p) {
+    const { inicial, mensal, incremento, taxa, taxaTipo, periodo, periodoTipo, inflacao, ir } = p;
+    return { inicial, mensal, incremento, taxa, taxaTipo, periodo, periodoTipo, inflacao, ir };
+  }
+  function fillForm(p) {
+    $("inicial").value = NUM.format(p.inicial);
+    $("mensal").value = NUM.format(p.mensal);
+    $("incremento").value = NUM.format(p.incremento);
+    $("taxa").value = NUM.format(p.taxa * 100);
+    $("taxaTipo").value = p.taxaTipo;
+    $("periodo").value = String(p.periodo);
+    $("periodoTipo").value = p.periodoTipo;
+    $("inflacao").value = NUM.format(p.inflacao * 100);
+    $("ir").value = NUM.format(p.ir * 100);
+  }
+  function prazoTxt(meses) {
+    const a = Math.floor(meses / 12), m = meses % 12;
+    return [a ? `${a} ano${a > 1 ? "s" : ""}` : "", m ? `${m} ${m > 1 ? "meses" : "mês"}` : ""].filter(Boolean).join(" e ") || "0 meses";
+  }
+  function taxaTxt(p) { return `${pct(p.taxa)} ${p.taxaTipo === "anual" ? "a.a." : "a.m."}`; }
+
+  $("scSaveBtn").addEventListener("click", () => {
+    const p = readParams();
+    if (p.err) { $("scError").textContent = "Não foi possível salvar: " + p.err; return; }
+    $("scError").textContent = "";
+    const name = $("scName").value.trim() || `Cenário ${scenarios.length + 1}`;
+    scenarios.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name, color: nextColor(), selected: true, createdAt: new Date().toISOString(), params: paramsOnly(p),
+    });
+    persist();
+    $("scName").value = "";
+    renderScenarios();
+  });
+  $("scName").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("scSaveBtn").click(); } });
+
+  $("scList").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act]"); if (!btn) return;
+    const i = scenarios.findIndex((s) => s.id === btn.closest("[data-id]").dataset.id); if (i < 0) return;
+    const s = scenarios[i];
+    if (btn.dataset.act === "load") {
+      fillForm(s.params); calc();
+      $("form").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (btn.dataset.act === "update") {
+      const p = readParams();
+      if (p.err) { $("scError").textContent = "Não foi possível atualizar: " + p.err; return; }
+      if (!confirm(`Substituir os valores de "${s.name}" pelos valores atuais do simulador?`)) return;
+      s.params = paramsOnly(p);
+    } else if (btn.dataset.act === "rename") {
+      const n = prompt("Novo nome do cenário:", s.name);
+      if (n == null || !n.trim()) return;
+      s.name = n.trim().slice(0, 40);
+    } else if (btn.dataset.act === "del") {
+      if (!confirm(`Excluir o cenário "${s.name}"?`)) return;
+      scenarios.splice(i, 1);
+    }
+    persist(); renderScenarios();
+  });
+  $("scList").addEventListener("change", (e) => {
+    if (!e.target.matches("input[type=checkbox]")) return;
+    const s = scenarios.find((x) => x.id === e.target.closest("[data-id]").dataset.id);
+    if (s) { s.selected = e.target.checked; persist(); renderScenarios(); }
+  });
+
+  $("scExport").addEventListener("click", () => {
+    if (!scenarios.length) { $("scError").textContent = "Não há cenários para exportar."; return; }
+    const blob = new Blob([JSON.stringify({ versao: 1, cenarios: scenarios }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "cenarios-juros-compostos.json"; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $("scImport").addEventListener("change", async (e) => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      const list = Array.isArray(data) ? data : data.cenarios;
+      if (!Array.isArray(list)) throw new Error();
+      const keys = ["inicial", "mensal", "incremento", "taxa", "periodo", "inflacao", "ir"];
+      let n = 0;
+      list.forEach((s) => {
+        if (!s || !s.params || !keys.every((k) => typeof s.params[k] === "number" && isFinite(s.params[k]))) return;
+        if (scenarios.some((x) => x.id === s.id)) return; // já existe
+        const p = s.params;
+        scenarios.push({
+          id: String(s.id || Date.now().toString(36) + n), name: String(s.name || `Cenário ${scenarios.length + 1}`).slice(0, 40),
+          color: PALETTE.includes(s.color) ? s.color : nextColor(), selected: s.selected !== false,
+          createdAt: s.createdAt || new Date().toISOString(),
+          params: { ...paramsOnly(p), taxaTipo: p.taxaTipo === "mensal" ? "mensal" : "anual", periodoTipo: p.periodoTipo === "meses" ? "meses" : "anos" },
+        });
+        n++;
+      });
+      persist(); renderScenarios();
+      $("scError").textContent = n ? "" : "Nenhum cenário novo encontrado no arquivo.";
+    } catch (_) { $("scError").textContent = "Arquivo inválido. Use um arquivo exportado por esta calculadora."; }
+  });
+
+  function renderScenarios() {
+    const results = scenarios.map((s) => ({ s, r: simulate(s.params) }));
+    const sel = results.filter((x) => x.s.selected);
+    $("scEmpty").hidden = scenarios.length > 0;
+    $("scCount").textContent = scenarios.length
+      ? `${scenarios.length} cenário${scenarios.length > 1 ? "s" : ""} salvo${scenarios.length > 1 ? "s" : ""} · ${sel.length} na comparação` +
+        (memoryOnly ? " · atenção: o navegador não permite salvar; os cenários somem ao fechar a página" : "")
+      : "";
+    $("scList").innerHTML = results.map(({ s, r }) => `
+      <div class="card sc-item${s.selected ? "" : " off"}" data-id="${esc(s.id)}" style="--c:${s.color}">
+        <div class="sc-top">
+          <input type="checkbox" ${s.selected ? "checked" : ""} aria-label="Incluir ${esc(s.name)} na comparação" title="Incluir na comparação">
+          <span class="sc-name" title="${esc(s.name)}">${esc(s.name)}</span>
+        </div>
+        <div class="sc-final">${fmt(r.final)}</div>
+        <div class="sc-meta">${fmt(s.params.mensal)}/mês${s.params.incremento ? ` (+${fmt(s.params.incremento)}/ano)` : ""}
+          · ${taxaTxt(s.params)} · ${prazoTxt(r.meses)}${s.params.inicial ? ` · inicial ${fmt(s.params.inicial)}` : ""}</div>
+        <div class="sc-btns">
+          <button type="button" class="btn btn-ghost" data-act="load">Abrir no simulador</button>
+          <button type="button" class="btn btn-ghost" data-act="update" title="Substituir pelos valores atuais do simulador">Atualizar</button>
+          <button type="button" class="btn btn-ghost" data-act="rename">Renomear</button>
+          <button type="button" class="btn btn-ghost btn-danger" data-act="del">Excluir</button>
+        </div>
+      </div>`).join("");
+    renderCompare(sel);
+  }
+
+  function seriesValue(row, r, p) {
+    if (cmpMetric === "investido") return row.investido;
+    if (cmpMetric === "juros") return row.juros;
+    if (cmpMetric === "real") return (row.total - row.juros * p.ir) / Math.pow(1 + p.inflacao, row.mes / 12);
+    return row.total;
+  }
+
+  function renderCompare(sel) {
+    $("cmp").hidden = sel.length === 0;
+    if (!sel.length) return;
+    renderCmpTable(sel);
+    if (typeof Chart === "undefined") return;
+    const grid = css("--border"), muted = css("--muted");
+
+    // Gráfico de linhas: x em anos, um ponto por mês
+    const lineSets = sel.map(({ s, r }) => ({
+      label: s.name, borderColor: s.color, backgroundColor: s.color, borderWidth: 2.5,
+      pointRadius: 0, pointHoverRadius: 4, tension: 0,
+      data: r.rows.map((row) => ({ x: row.mes / 12, y: seriesValue(row, r, s.params), mes: row.mes })),
+    }));
+    if (cmpLine) cmpLine.destroy();
+    cmpLine = new Chart($("cmpLine"), {
+      type: "line",
+      data: { datasets: lineSets },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: { duration: 300 }, parsing: false,
+        interaction: { mode: "nearest", axis: "x", intersect: false },
+        plugins: {
+          legend: { position: "bottom", labels: { color: muted, usePointStyle: true, pointStyle: "circle", boxWidth: 8, boxHeight: 8 } },
+          tooltip: { callbacks: {
+            title: (items) => items.length ? `Mês ${items[0].raw.mes} (${prazoTxt(items[0].raw.mes)})` : "",
+            label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y)}`,
+          } },
+        },
+        scales: {
+          x: { type: "linear", min: 0, grid: { color: grid }, border: { display: false },
+               title: { display: true, text: "Anos", color: muted },
+               ticks: { color: muted, stepSize: 1, callback: (v) => Number.isInteger(v) ? v : "" } },
+          y: { grid: { color: grid }, border: { display: false }, ticks: { color: muted, callback: (v) => compact(v) } },
+        },
+      },
+    });
+
+    // Barras empilhadas: investido + juros por cenário
+    $("cmpBarBox").style.height = Math.max(200, sel.length * 56 + 80) + "px";
+    if (cmpBar) cmpBar.destroy();
+    cmpBar = new Chart($("cmpBar"), {
+      type: "bar",
+      data: {
+        labels: sel.map(({ s }) => s.name),
+        datasets: [
+          { label: "Total investido", data: sel.map(({ r }) => r.investido), backgroundColor: css("--invested"), borderRadius: 3, barThickness: 28 },
+          { label: "Total em juros", data: sel.map(({ r }) => r.juros), backgroundColor: css("--interest"), borderRadius: 3, barThickness: 28 },
+        ],
+      },
+      options: {
+        indexAxis: "y", responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { position: "bottom", labels: { color: muted, usePointStyle: true, pointStyle: "circle", boxWidth: 8, boxHeight: 8 } },
+          tooltip: { callbacks: {
+            label: (c) => `${c.dataset.label}: ${fmt(c.parsed.x)}`,
+            footer: (items) => `Total: ${fmt(items.reduce((t, i) => t + i.parsed.x, 0))}`,
+          } },
+        },
+        scales: {
+          x: { stacked: true, grid: { color: grid }, border: { display: false }, ticks: { color: muted, callback: (v) => compact(v) } },
+          y: { stacked: true, grid: { display: false }, ticks: { color: css("--text"), font: { weight: 600 } } },
+        },
+      },
+    });
+  }
+
+  function cmpRows(sel) {
+    // [rótulo, valores numéricos, formatador, melhor: "max" | "min" | null]
+    const crossover = (r) => { const row = r.rows.find((x) => x.mes > 0 && x.jurosMes >= x.aporte && x.aporte > 0); return row ? row.mes : null; };
+    const P = (f) => sel.map(({ s, r }) => f(s.params, r));
+    return [
+      ["Parâmetros"],
+      ["Valor inicial", P((p) => p.inicial), fmt],
+      ["Aporte mensal inicial", P((p) => p.mensal), fmt],
+      ["Aumento anual do aporte", P((p) => p.incremento), fmt],
+      ["Aporte mensal no último mês", P((p, r) => r.rows[r.rows.length - 1].aporte), fmt],
+      ["Taxa de juros", P((p) => p), taxaTxt],
+      ["Taxa mensal equivalente", P((p, r) => r.r), (v) => pct(v, 4) + " a.m."],
+      ["Prazo", P((p, r) => r.meses), prazoTxt],
+      ["Inflação anual", P((p) => p.inflacao), (v) => pct(v)],
+      ["Imposto de renda", P((p) => p.ir), (v) => pct(v)],
+      ["Resultados"],
+      ["Valor total final", P((p, r) => r.final), fmt, "max"],
+      ["Total investido", P((p, r) => r.investido), fmt],
+      ["Total em juros", P((p, r) => r.juros), fmt, "max"],
+      ["Juros sobre o investido", P((p, r) => r.investido ? r.juros / r.investido : 0), (v) => pct(v, 1), "max"],
+      ["Valor líquido (após IR)", P((p, r) => r.liquido), fmt, "max"],
+      ["Valor líquido real (hoje)", P((p, r) => r.real), fmt, "max"],
+      ["Renda mensal passiva estimada", P((p, r) => r.renda), fmt, "max"],
+      ["Juros do mês superam o aporte", P((p, r) => crossover(r)), (v) => v == null ? "não ocorre" : `mês ${v} (${prazoTxt(v)})`, "min"],
+    ];
+  }
+
+  function renderCmpTable(sel) {
+    const head = `<thead><tr><th>Item</th>${sel.map(({ s }) => `<th><span class="sw" style="background:${s.color}"></span>${esc(s.name)}</th>`).join("")}</tr></thead>`;
+    const body = cmpRows(sel).map(([label, vals, f, best]) => {
+      if (!vals) return `<tr class="grp"><td colspan="${sel.length + 1}">${label}</td></tr>`;
+      let bestVal = null;
+      if (best && sel.length > 1) {
+        const nums = vals.filter((v) => typeof v === "number");
+        if (nums.length) bestVal = best === "max" ? Math.max(...nums) : Math.min(...nums);
+      }
+      return `<tr><td>${label}</td>${vals.map((v) =>
+        `<td${bestVal != null && v === bestVal ? ' class="best"' : ""}>${esc(f(v))}</td>`).join("")}</tr>`;
+    }).join("");
+    $("cmpTable").innerHTML = head + `<tbody>${body}</tbody>`;
+  }
+
+  $("cmpCsv").addEventListener("click", () => {
+    const sel = scenarios.filter((s) => s.selected).map((s) => ({ s, r: simulate(s.params) }));
+    if (!sel.length) return;
+    const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    const lines = [["Item"].concat(sel.map(({ s }) => s.name)).map(q).join(";")];
+    cmpRows(sel).forEach(([label, vals, f]) => {
+      if (!vals) return;
+      lines.push([label].concat(vals.map((v) => (typeof v === "number" && f === fmt) ? v.toFixed(2).replace(".", ",") : f(v))).map(q).join(";"));
+    });
+    const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "comparacao-cenarios.csv"; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
+  bindSeg("cmpMetric", (v) => { cmpMetric = v; renderScenarios(); });
+  loadScenarios();
+
   // ---------- Tema ----------
   const root = document.documentElement;
   try { const t = localStorage.getItem("theme"); if (t) root.dataset.theme = t; } catch (_) {}
@@ -602,10 +972,12 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
     root.dataset.theme = dark ? "light" : "dark";
     try { localStorage.setItem("theme", root.dataset.theme); } catch (_) {}
     renderChart();
+    renderScenarios();
   });
 
   // Exibe o exemplo da planilha ao abrir
   calc();
+  renderScenarios();
   window.__simulate = simulate;
 })();
 </script>
