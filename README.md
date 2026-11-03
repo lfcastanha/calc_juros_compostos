@@ -5,7 +5,17 @@ Site estático (um único `index.html`) que simula investimentos com juros compo
 
 ## Como usar
 
-Abra o `index.html` no navegador, ou publique a pasta em qualquer hospedagem estática (GitHub Pages, Netlify etc.).
+Abra o `index.html` no navegador ou acesse a versão publicada:
+**https://lfcastanha.github.io/calc_juros_compostos/**
+
+### Publicação (GitHub Pages)
+
+O workflow `.github/workflows/pages.yml` publica o site automaticamente a cada push no branch `main`
+(também pode ser disparado manualmente em *Actions → Publicar no GitHub Pages → Run workflow*).
+
+Configuração única no repositório:
+1. *Settings → Pages → Build and deployment → Source*: **GitHub Actions**.
+2. *Settings → General → Default branch*: **main**.
 O gráfico usa Chart.js via CDN; sem internet, os resultados e a tabela continuam funcionando.
 
 ## Funcionalidades
