@@ -22,6 +22,8 @@ O gráfico usa Chart.js via CDN; sem internet, os resultados e a tabela continua
 
 - Valor inicial, aporte mensal e **aumento anual do aporte** (aporte do ano *n* = aporte inicial + (n − 1) × aumento)
 - Taxa de juros anual ou mensal; período em anos ou meses (até 100 anos)
+- **Opções avançadas** (recolhidas por padrão): começar a aportar só após X anos/meses, parar de aportar após
+  X anos/meses (o patrimônio continua rendendo fora dessa janela), inflação e imposto de renda
 - Resultados: valor total final, total investido, total em juros, valor líquido após IR,
   valor líquido real (descontada a inflação) e renda mensal passiva estimada
 - Gráfico de barras (composição investido × juros, ou aporte × juros do mês)
@@ -39,6 +41,7 @@ O gráfico usa Chart.js via CDN; sem internet, os resultados e a tabela continua
 
 - Taxa mensal equivalente: `(1 + taxa_anual)^(1/12) − 1`
 - Mês 0: o valor inicial rende um mês de juros
+- O aumento anual do aporte conta a partir do primeiro aporte mensal (relevante quando os aportes começam depois)
 - Mês *m*: o aporte entra no início do mês e rende no mesmo mês:
   `juros_m = (total_investido_m + juros_acumulados_{m−1}) × taxa_mensal`
 

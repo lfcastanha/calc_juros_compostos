@@ -110,6 +110,10 @@ details.adv summary::-webkit-details-marker { display: none; }
 details.adv summary::before { content: "+ "; }
 details.adv[open] summary::before { content: "– "; }
 details.adv .grid { margin-top: 14px; }
+details.adv + details.adv { margin-top: 12px; }
+.adv-sum { font-weight: 500; color: var(--muted); font-size: 13px; margin-left: 6px; }
+.adv-h { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 18px 0 0; }
+.adv-h + .grid { margin-top: 10px !important; }
 .salary-preview { margin-top: 14px; font-size: 14px; color: var(--muted); }
 .salary-preview strong { color: var(--text); }
 
@@ -265,16 +269,46 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
           <select id="periodoTipo" aria-label="Unidade do período"><option value="anos" selected>anos</option><option value="meses">meses</option></select>
         </div>
       </div>
-      <div class="field">
-        <label for="inflacao">Inflação anual estimada</label>
-        <div class="input"><span class="affix">%</span><input id="inflacao" inputmode="decimal" value="3,00"></div>
-      </div>
-      <div class="field">
-        <label for="ir">Imposto de renda</label>
-        <div class="input"><span class="affix">%</span><input id="ir" inputmode="decimal" value="15,00"></div>
-        <span class="hint">Incide só sobre os juros. 15% é a alíquota para prazos acima de 2 anos.</span>
-      </div>
     </div>
+
+    <details class="adv" id="advBox">
+      <summary>Opções avançadas <span class="adv-sum" id="advSum"></span></summary>
+      <h4 class="adv-h">Período dos aportes mensais</h4>
+      <div class="grid">
+        <div class="field">
+          <label for="inicioAporte">Começar a aportar após</label>
+          <div class="input">
+            <input id="inicioAporte" inputmode="numeric" value="0">
+            <select id="inicioTipo" aria-label="Unidade do início dos aportes"><option value="anos" selected>anos</option><option value="meses">meses</option></select>
+          </div>
+          <span class="hint">0 = aporta desde o 1º mês. O dinheiro já investido continua rendendo.</span>
+        </div>
+        <div class="field">
+          <label for="fimAporte">Parar de aportar após</label>
+          <div class="input">
+            <input id="fimAporte" inputmode="numeric" value="" placeholder="até o fim">
+            <select id="fimTipo" aria-label="Unidade do fim dos aportes"><option value="anos" selected>anos</option><option value="meses">meses</option></select>
+          </div>
+          <span class="hint">Contado do início da simulação. Vazio = aporta até o fim do período.</span>
+        </div>
+      </div>
+      <h4 class="adv-h">Impostos e inflação</h4>
+      <div class="grid">
+        <div class="field">
+          <label for="inflacao">Inflação anual estimada</label>
+          <div class="input"><span class="affix">%</span><input id="inflacao" inputmode="decimal" value="3,00"></div>
+          <span class="hint">Usada para calcular o valor real (poder de compra de hoje).</span>
+        </div>
+        <div class="field">
+          <label for="ir">Imposto de renda</label>
+          <div class="input"><span class="affix">%</span><input id="ir" inputmode="decimal" value="15,00"></div>
+          <span class="hint">Incide só sobre os juros. 15% é a alíquota para prazos acima de 2 anos.</span>
+        </div>
+      </div>
+      <div class="actions" style="justify-content:flex-start;margin-top:12px">
+        <button type="button" class="btn btn-ghost btn-sm" id="advReset">Restaurar padrões avançados</button>
+      </div>
+    </details>
 
     <details class="adv" id="salaryBox">
       <summary>Calcular o aporte a partir do meu salário</summary>
@@ -423,7 +457,9 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
       <li>A taxa anual é convertida na taxa mensal equivalente: <code>i<sub>m</sub> = (1 + i<sub>a</sub>)<sup>1/12</sup> − 1</code>.
         Por exemplo, 13% ao ano equivale a cerca de 1,02% ao mês.</li>
       <li>O aporte de cada mês entra no início do mês e já rende juros naquele mês.</li>
-      <li>O aporte mensal sobe pelo valor de “aumento anual” a cada novo ano (meses 13, 25, 37…).</li>
+      <li>O aporte mensal sobe pelo valor de “aumento anual” a cada novo ano de aportes (meses 13, 25, 37… contados a partir do primeiro aporte).</li>
+      <li>Em “Opções avançadas” é possível começar a aportar só depois de um tempo ou parar de aportar antes do fim:
+        fora dessa janela não há aportes, mas o patrimônio continua rendendo juros.</li>
       <li>O imposto de renda é descontado apenas sobre os juros, no resgate.</li>
       <li>O valor real divide o valor líquido pela inflação acumulada: <code>(1 + inflação)<sup>anos</sup></code>.</li>
     </ul>
@@ -463,7 +499,30 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
   document.querySelectorAll("[data-money]").forEach((el) => {
     el.addEventListener("input", () => { maskMoney(el); el.setSelectionRange(el.value.length, el.value.length); });
   });
-  $("periodo").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
+  ["periodo", "inicioAporte", "fimAporte"].forEach((id) =>
+    $(id).addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); }));
+
+  // ---------- Opções avançadas ----------
+  const ADV_DEFAULT = { inicioAporte: "0", inicioTipo: "anos", fimAporte: "", fimTipo: "anos", inflacao: "3,00", ir: "15,00" };
+  function resetAdvanced() {
+    Object.entries(ADV_DEFAULT).forEach(([id, v]) => ($(id).value = v));
+    renderAdvSummary();
+  }
+  function renderAdvSummary() {
+    const parts = [];
+    const ini = parseBR($("inicioAporte").value) || 0;
+    const fim = $("fimAporte").value.trim();
+    const un = (v, t) => `${v} ${t === "anos" ? (v == 1 ? "ano" : "anos") : (v == 1 ? "mês" : "meses")}`;
+    if (ini) parts.push(`aportes a partir de ${un(ini, $("inicioTipo").value)}`);
+    if (fim) parts.push(`aportes até ${un(fim, $("fimTipo").value)}`);
+    parts.push(`inflação ${$("inflacao").value || "0"}%`, `IR ${$("ir").value || "0"}%`);
+    $("advSum").textContent = "(" + parts.join(" · ") + ")";
+  }
+  ["inicioAporte", "inicioTipo", "fimAporte", "fimTipo", "inflacao", "ir"].forEach((id) => {
+    $(id).addEventListener("input", renderAdvSummary);
+    $(id).addEventListener("change", renderAdvSummary);
+  });
+  $("advReset").addEventListener("click", () => { resetAdvanced(); if (last) calc(); });
 
   // ---------- Motor de cálculo (mesma lógica da planilha) ----------
   function simulate(p) {
@@ -474,9 +533,13 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
     let investido = p.inicial;
     let juros = investido * r;
     rows.push({ mes: 0, ano: 0, aporte: p.inicial, jurosMes: juros, investido, juros, total: investido + juros });
+    const ini = aporteInicioMeses(p), fim = aporteFimMeses(p);
     for (let m = 1; m <= meses; m++) {
       const ano = Math.ceil(m / 12);
-      const aporte = Math.max(0, p.mensal + (ano - 1) * p.incremento);
+      // Aportes só entre o início e o fim configurados; o aumento anual conta a partir do 1º aporte
+      const ativo = m > ini && (fim == null || m <= fim);
+      const anoAporte = Math.ceil((m - ini) / 12);
+      const aporte = ativo ? Math.max(0, p.mensal + (anoAporte - 1) * p.incremento) : 0;
       investido += aporte;
       const base = investido + juros;
       const jm = base * r;
@@ -491,8 +554,29 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
     return { r, meses, rows, final: last.total, investido: last.investido, juros: last.juros, ir, liquido, real, renda: liquido * r };
   }
 
+  const toMeses = (v, tipo) => Math.round(tipo === "meses" ? v : v * 12);
+  function aporteInicioMeses(p) { return p.inicioAporte ? toMeses(p.inicioAporte, p.inicioTipo) : 0; }
+  function aporteFimMeses(p) { return p.fimAporte == null ? null : toMeses(p.fimAporte, p.fimTipo); }
+  function aporteJanela(p, meses) {
+    // Primeiro e último mês com aporte mensal (null se não houver)
+    const ini = aporteInicioMeses(p) + 1;
+    const fim = Math.min(meses, aporteFimMeses(p) ?? meses);
+    return ini > fim ? null : { ini, fim };
+  }
+  function aporteJanelaTxt(p, meses) {
+    const j = aporteJanela(p, meses);
+    if (!j || (!p.mensal && !p.incremento)) return "sem aportes mensais";
+    if (j.ini === 1 && j.fim === meses) return "durante todo o período";
+    return `do mês ${j.ini} ao mês ${j.fim}`;
+  }
+
   function readParams() {
+    const fimRaw = $("fimAporte").value.trim();
     const p = {
+      inicioAporte: parseBR($("inicioAporte").value) || 0,
+      inicioTipo: $("inicioTipo").value,
+      fimAporte: fimRaw === "" ? null : parseBR(fimRaw),
+      fimTipo: $("fimTipo").value,
       inicial: parseBR($("inicial").value) || 0,
       mensal: parseBR($("mensal").value) || 0,
       incremento: parseBR($("incremento").value) || 0,
@@ -508,6 +592,9 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
     const meses = p.periodoTipo === "anos" ? p.periodo * 12 : p.periodo;
     if (meses > 1200) return { err: "O período máximo é de 100 anos (1.200 meses)." };
     if (p.ir < 0 || p.ir > 1) return { err: "O imposto de renda deve estar entre 0% e 100%." };
+    if (p.fimAporte != null && (!isFinite(p.fimAporte) || p.fimAporte <= 0)) return { err: "Em opções avançadas, “parar de aportar após” deve ser maior que zero (ou vazio)." };
+    if (p.fimAporte != null && aporteFimMeses(p) <= aporteInicioMeses(p)) return { err: "Em opções avançadas, o fim dos aportes deve ser depois do início." };
+    if (aporteInicioMeses(p) >= meses && (p.mensal || p.incremento)) return { err: "Em opções avançadas, o início dos aportes é depois do fim do período." };
     if (p.inicial === 0 && p.mensal === 0 && p.incremento === 0) return { err: "Informe um valor inicial ou um valor mensal." };
     return p;
   }
@@ -616,7 +703,7 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
     const anos = Math.floor(last.meses / 12), meses = last.meses % 12;
     const prazo = [anos ? `${anos} ano${anos > 1 ? "s" : ""}` : "", meses ? `${meses} ${meses > 1 ? "meses" : "mês"}` : ""].filter(Boolean).join(" e ");
     $("resultSub").textContent = `Em ${prazo} (${last.meses} meses), com taxa mensal equivalente de ` +
-      `${(last.r * 100).toLocaleString("pt-BR", { maximumFractionDigits: 4 })}% a.m.`;
+      `${(last.r * 100).toLocaleString("pt-BR", { maximumFractionDigits: 4 })}% a.m. · aportes mensais ${aporteJanelaTxt(p, last.meses)}.`;
     $("resultSection").hidden = false;
     renderChart();
     renderTable();
@@ -630,8 +717,8 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
 
   $("clearBtn").addEventListener("click", () => {
     ["inicial", "mensal", "incremento"].forEach((id) => ($(id).value = "0,00"));
-    ["taxa", "periodo", "inflacao"].forEach((id) => ($(id).value = ""));
-    $("ir").value = "15,00";
+    ["taxa", "periodo"].forEach((id) => ($(id).value = ""));
+    resetAdvanced();
     $("taxaTipo").value = "anual"; $("periodoTipo").value = "anos";
     $("error").textContent = "";
     $("resultSection").hidden = true; last = null;
@@ -696,6 +783,7 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
     try {
       const raw = localStorage.getItem(SC_KEY);
       scenarios = raw ? JSON.parse(raw).filter((s) => s && s.params) : [];
+      scenarios.forEach((s) => (s.params = paramsOnly(s.params)));
     } catch (_) { scenarios = []; memoryOnly = true; }
   }
   function persist() {
@@ -708,7 +796,11 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
   }
   function paramsOnly(p) {
     const { inicial, mensal, incremento, taxa, taxaTipo, periodo, periodoTipo, inflacao, ir } = p;
-    return { inicial, mensal, incremento, taxa, taxaTipo, periodo, periodoTipo, inflacao, ir };
+    return {
+      inicial, mensal, incremento, taxa, taxaTipo, periodo, periodoTipo, inflacao, ir,
+      inicioAporte: Number(p.inicioAporte) || 0, inicioTipo: p.inicioTipo === "meses" ? "meses" : "anos",
+      fimAporte: typeof p.fimAporte === "number" && p.fimAporte > 0 ? p.fimAporte : null, fimTipo: p.fimTipo === "meses" ? "meses" : "anos",
+    };
   }
   function fillForm(p) {
     $("inicial").value = NUM.format(p.inicial);
@@ -720,6 +812,12 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
     $("periodoTipo").value = p.periodoTipo;
     $("inflacao").value = NUM.format(p.inflacao * 100);
     $("ir").value = NUM.format(p.ir * 100);
+    $("inicioAporte").value = String(p.inicioAporte || 0);
+    $("inicioTipo").value = p.inicioTipo || "anos";
+    $("fimAporte").value = p.fimAporte == null ? "" : String(p.fimAporte);
+    $("fimTipo").value = p.fimTipo || "anos";
+    renderAdvSummary();
+    if (p.inicioAporte || p.fimAporte != null) $("advBox").open = true;
   }
   function prazoTxt(meses) {
     const a = Math.floor(meses / 12), m = meses % 12;
@@ -820,7 +918,8 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
         </div>
         <div class="sc-final">${fmt(r.final)}</div>
         <div class="sc-meta">${fmt(s.params.mensal)}/mês${s.params.incremento ? ` (+${fmt(s.params.incremento)}/ano)` : ""}
-          · ${taxaTxt(s.params)} · ${prazoTxt(r.meses)}${s.params.inicial ? ` · inicial ${fmt(s.params.inicial)}` : ""}</div>
+          · ${taxaTxt(s.params)} · ${prazoTxt(r.meses)}${s.params.inicial ? ` · inicial ${fmt(s.params.inicial)}` : ""}${
+          (s.params.inicioAporte || s.params.fimAporte != null) ? ` · aportes ${aporteJanelaTxt(s.params, r.meses)}` : ""}</div>
         <div class="sc-btns">
           <button type="button" class="btn btn-ghost" data-act="load">Abrir no simulador</button>
           <button type="button" class="btn btn-ghost" data-act="update" title="Substituir pelos valores atuais do simulador">Atualizar</button>
@@ -913,7 +1012,9 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
       ["Valor inicial", P((p) => p.inicial), fmt],
       ["Aporte mensal inicial", P((p) => p.mensal), fmt],
       ["Aumento anual do aporte", P((p) => p.incremento), fmt],
-      ["Aporte mensal no último mês", P((p, r) => r.rows[r.rows.length - 1].aporte), fmt],
+      ["Período dos aportes mensais", P((p, r) => aporteJanelaTxt(p, r.meses)), (v) => v],
+      ["Meses com aporte", P((p, r) => r.rows.filter((x) => x.mes > 0 && x.aporte > 0).length), (v) => String(v)],
+      ["Último aporte mensal", P((p, r) => { const a = r.rows.filter((x) => x.mes > 0 && x.aporte > 0); return a.length ? a[a.length - 1].aporte : 0; }), fmt],
       ["Taxa de juros", P((p) => p), taxaTxt],
       ["Taxa mensal equivalente", P((p, r) => r.r), (v) => pct(v, 4) + " a.m."],
       ["Prazo", P((p, r) => r.meses), prazoTxt],
@@ -976,6 +1077,7 @@ footer { color: var(--muted); font-size: 13px; padding: 32px 0 40px; text-align:
   });
 
   // Exibe o exemplo da planilha ao abrir
+  renderAdvSummary();
   calc();
   renderScenarios();
   window.__simulate = simulate;
